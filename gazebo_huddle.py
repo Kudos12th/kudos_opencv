@@ -21,27 +21,18 @@ def image_callback(msg):
     except Exception as e:
         rospy.logerr(e)
 
-def bev(image) :
-
-    # height, width = image.shape[:2]
-
-    # ource = np.float32([[width/3, 0], [0, height], [width*2/3, 0], [width, height]])
-    # destination = np.float32([[0,0], [0,height],[width,0] ,[width, height] ])
-
-    # transform_matrix = cv2.getPerspectiveTransform(source, destination)
-    # transformed_img = cv2.warpPerspective(image, transform_matrix, (width,height))
-
-    transformed_img = image  # 버드아이뷰 안쓸 때
-
+def bev(image):
+    # 사용 X
+    transformed_img = image  
     return transformed_img
 
- # yellow_bgr = [60,255,255]
 ye_low_bgr = np.array([0, 80, 80])
 ye_upp_bgr = np.array([50, 150, 150])
+detected_huddle_color = (255, 100, 255)
 
-detected_huddle_color = (255 , 100 , 255) # light violet
-
-
+def calculate_distance(contour_area):
+    # 거리계산 채워놓기
+    return contour_area 
 
 def main():
     rospy.init_node('video_subscriber_node', anonymous=True)
@@ -56,31 +47,48 @@ def main():
     while not rospy.is_shutdown():
         
         if cv_image is not None:
-            
             frame = cv_image
-
-            frame = cv2.resize(frame, (640,480))
-
+            frame = cv2.resize(frame, (640, 480))
             bev_frame = bev(frame)
     
             huddle_img = cv2.inRange(bev_frame, ye_low_bgr, ye_upp_bgr)
-
             huddle_contours, huddle_hier = cv2.findContours(huddle_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-            # 노이즈 제거를 위한 모폴로지 연산 적용
             kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
             huddle_img = cv2.morphologyEx(huddle_img, cv2.MORPH_OPEN, kernel, iterations=2)
 
             huddle_contours, huddle_hier = cv2.findContours(huddle_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
+            largest_contour = max(huddle_contours, key=cv2.contourArea, default=None)
+
+            if largest_contour is not None:
+                contour_area = cv2.contourArea(largest_contour)
+                estimated_distance = calculate_distance(contour_area)
+                print(f"Largest Contour Area: {contour_area}, Estimated Distance: {estimated_distance}")
+
+            centers = []  
+
+            for contour in huddle_contours:
+                M = cv2.moments(contour)
+                if M["m00"] != 0:
+                    cX = int(M["m10"] / M["m00"])
+                    cY = int(M["m01"] / M["m00"])
+                    centers.append((cX, cY))  
+
+          
+            sorted_centers = sorted(centers, key=lambda x: x[1], reverse=True)
+
+    
+            for idx, center in enumerate(sorted_centers, start=1):
+                cX, cY = center
+                print(f"Huddle {idx}: X = {cX}, Y = {cY}")
+                cv2.circle(bev_frame, (cX, cY), 5, (0, 255, 0), -1)
             cv2.drawContours(bev_frame, huddle_contours, -1, detected_huddle_color , 2 ,cv2.LINE_8, huddle_hier)
             cv2.imshow("Detection in Bird Eye View", bev_frame)
             cv2.imshow("Camera", frame)
 
-
-        if cv2.waitKey(1) & 0xFF == 27 :
+        if cv2.waitKey(1) & 0xFF == 27:
             break
-
 
     cv2.destroyAllWindows()
 
