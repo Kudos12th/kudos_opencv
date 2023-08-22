@@ -38,7 +38,7 @@ def bev(image) :
     height = 480 #240
     
     # source = np.float32([[280, 440], [270, 480], [360, 440], [370, 480]])
-    source = np.float32([[250, 350], [240, 430], [380, 350], [390, 430]])
+    source = np.float32([[250, 380], [240, 430], [380, 380], [390, 430]])
     destination = np.float32([[0,0], [0,height],[width,0] ,[width, height] ])
 
     transform_matrix = cv2.getPerspectiveTransform(source, destination)
