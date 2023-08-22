@@ -10,6 +10,8 @@ from geometry_msgs.msg import Twist
 
 # Global variable to hold the latest image
 cv_image = None
+last_angular_vel = 0.0
+last_linear_vel = 0.0
 
 def image_callback(msg):
     global cv_image
@@ -26,6 +28,7 @@ def image_callback(msg):
 
 
 def calculate_velocities(centers, image_width) :
+    global last_angular_vel, last_linear_vel
     if len(centers) >= 2 :
         center_x = image_width // 2
         line_center_x = sum(point[0] for point in centers) // len(centers)
@@ -37,10 +40,13 @@ def calculate_velocities(centers, image_width) :
         angular_vel = max_angular_vel * angle_error
         linear_vel = max_linear_vel * (1.0 - abs(angle_error))
 
+        last_angular_vel = angular_vel
+        last_linear_vel = linear_vel
+
         return angular_vel, linear_vel
     
     else:
-        return 0.0, 0.0
+        return last_angular_vel,last_linear_vel
 
 
 def find_white(image) :
