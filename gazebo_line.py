@@ -22,15 +22,23 @@ def image_callback(msg):
         rospy.logerr(e)
 
 
+def find_white(image) :
+    wh_low_bgr = np.array([100, 100 , 100])
+    wh_upp_bgr = np.array([255, 255, 255])
+    line_img = cv2.inRange(image, wh_low_bgr, wh_upp_bgr)
+
+    return line_img
+
+
 # bird eye view
 def bev(image) :
 
     # height, width = image.shape[:2]
-    width = 640
-    height = 480
+    width = 640 #320
+    height = 480 #240
     
     # source = np.float32([[280, 440], [270, 480], [360, 440], [370, 480]])
-    source = np.float32([[280, 350], [270, 430], [360, 350], [370, 430]])
+    source = np.float32([[250, 350], [240, 430], [380, 350], [390, 430]])
     destination = np.float32([[0,0], [0,height],[width,0] ,[width, height] ])
 
     transform_matrix = cv2.getPerspectiveTransform(source, destination)
@@ -41,10 +49,51 @@ def bev(image) :
     return transformed_img
 
 
-wh_low_bgr = np.array([100, 100 , 100])
-wh_upp_bgr = np.array([255, 255, 255])
+def window(image,out_img) :
 
-detected_line_color = (255, 150, 0) # light blue
+    margin = 50
+    nwindows = 5
+    window_height = int(image.shape[0]/nwindows)
+    line_color = [255,0,0]
+    window_color = [0, 0, 255]
+    center_color = [0, 255, 0]
+    thickness = 2
+    centers = []
+
+    line_contours, _ = cv2.findContours(image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    cv2.drawContours(out_img, line_contours, -1, line_color, thickness, cv2.LINE_8, _)
+
+    for w in range(nwindows) :
+        win_y_low = image.shape[0] - (w + 1) * window_height  # window 윗부분
+        win_y_high = image.shape[0] - w * window_height # winodw 아랫부분
+
+        points_in_window = []
+
+        for contour in line_contours :
+            for point in contour :
+                if win_y_low <= point[0][1] <= win_y_high :
+                    points_in_window.append(point[0])
+
+        
+        if len(points_in_window) > 0 :
+            points_in_window = np.array(points_in_window)
+            M = cv2.moments(points_in_window)
+            if M["m00"] != 0:
+                cX = int(M["m10"] / M["m00"])
+                cY = int(M["m01"] / M["m00"])
+                centers.append((cX, cY)) 
+
+                win_x_low = cX - margin
+                win_x_high = cX + margin
+
+                cv2.rectangle(out_img, (win_x_low, win_y_low), (win_x_high, win_y_high), window_color, thickness)
+
+    if len(centers) > 1:
+        for i in range(len(centers) -1):
+            cv2.line(out_img, centers[i], centers[i+1], center_color, thickness)
+
+    cv2.imshow('detection in Bird Eye View', out_img)
+
 
 
 def main():
@@ -58,59 +107,23 @@ def main():
 
     print("Press 'esc' to quit.")
     while not rospy.is_shutdown():
-
         # Display the image using OpenCV
         if cv_image is not None:
-            frame = cv_image
-            #frame_size = (int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
-            #print("Frame size : ", frame_size)
 
-            #ret, frame = cap.read()
+            frame = cv_image
             frame = cv2.resize(frame, (640, 480))
 
-            bev_frame = bev(frame)
+            bev_img = bev(frame)
+            wh_img = find_white(bev_img)
 
-            line_img = cv2.inRange(bev_frame, wh_low_bgr, wh_upp_bgr)
+            window(wh_img, bev_img)
 
-            line_contours, line_hier = cv2.findContours(line_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-   
-            # 노이즈 제거를 위한 모폴로지 연산 적용
-            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
-            line_img = cv2.morphologyEx(line_img, cv2.MORPH_OPEN, kernel, iterations=2)
-  
-            line_contours, line_hier = cv2.findContours(line_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+            cv2.imshow('camera', frame)
 
-            # 중심 선 그리기
-            if line_contours:
-                line_largest_contour = max(line_contours, key=cv2.contourArea)
-
-                points_by_y = {}
-                for point in line_largest_contour:
-                    x, y = point[0]
-                    if y in points_by_y:
-                        points_by_y[y].append((x, y))
-                    else:
-                        points_by_y[y] = [(x, y)]
-
-                midpoints = []
-                for y, points in points_by_y.items():
-                    if len(points) > 1:
-                        x_values = [point[0] for point in points]
-                        mid_x = int(np.mean(x_values))
-                        midpoints.append((mid_x, y))
-
-
-                # 중간 좌표 연결한 선 그리기
-                for i in range(len(midpoints) - 1):
-                    cv2.line(bev_frame, midpoints[i], midpoints[i + 1], (0, 255, 0), 2)
-
-            cv2.drawContours(bev_frame, line_contours, -1, detected_line_color , 2 , cv2.LINE_8, line_hier)
-    
-            cv2.imshow("Camera", frame)
-            cv2.imshow("Detection in Bird Eye View", bev_frame)
 
         if cv2.waitKey(1) & 0xFF == 27 :
             break
+
 
     cv2.destroyAllWindows()
 
