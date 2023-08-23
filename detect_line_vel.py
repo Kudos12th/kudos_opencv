@@ -1,31 +1,17 @@
-#!/usr/bin/env python
-import rospy
-from sensor_msgs.msg import Image
-from cv_bridge import CvBridge
 import cv2
 import numpy as np
 import math
 from geometry_msgs.msg import Twist
+import rospy
 
 
-# Global variable to hold the latest image
-cv_image = None
 last_angular_vel = 0.0
 last_linear_vel = 0.0
 
-def image_callback(msg):
-    global cv_image
+cap = cv2.VideoCapture(2)
 
-    try:
-        # Convert the ROS Image message to OpenCV format
-        bridge = CvBridge()
-        cv_image = bridge.imgmsg_to_cv2(msg, "bgr8")
-        # You can also process the image data here as needed
-        # ...
-
-    except Exception as e:
-        rospy.logerr(e)
-
+frame_size = (int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
+print("Frame size : ", frame_size)
 
 def calculate_velocities(centers, image_width) :
     global last_angular_vel, last_linear_vel
@@ -74,6 +60,12 @@ def bev(image) :
     # transformed_img = image  # 버드아이뷰 안쓸 때
 
     return transformed_img
+
+def noise(image) :
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
+    noise_img = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel, iterations=2)
+
+    return noise_img
 
 
 def window(image,out_img) :
@@ -125,47 +117,34 @@ def window(image,out_img) :
 
 
 
-def main():
+while True :
     cmd_vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
 
-    rospy.init_node('video_subscriber_node', anonymous=True)
+    print("Press 'esc' to quit.")
 
-    # Subscribe to the "/kubot_cam/image_raw" topic
-    rospy.Subscriber("/kubot_cam/image_raw", Image, image_callback)
+    ret, frame = cap.read()
+    frame = cv2.resize(frame, (640,480))
+    
+    bev_img = bev(frame)
+    noise_img = noise(bev_img)
+    wh_img = find_white(noise_img)
 
-    # Set the rate at which you want to display images (e.g., 10 Hz)
-    rate = rospy.Rate(10)  # 10 Hz
+    centers = window(wh_img, bev_img)
+
+    angular_vel, linear_vel = calculate_velocities(centers, bev_img.shape[1])
+
+    twist = Twist()
+    twist.angular.z = angular_vel
+    twist.linear.x = linear_vel
+    cmd_vel_pub.publish(twist)
+
+    cv2.imshow('camera', frame)
 
     print("Press 'esc' to quit.")
-    while not rospy.is_shutdown():
-        # Display the image using OpenCV
-        if cv_image is not None:
-
-            frame = cv_image
-            frame = cv2.resize(frame, (640, 480))
-
-            bev_img = bev(frame)
-            wh_img = find_white(bev_img)
-
-            centers = window(wh_img, bev_img)
-
-            # Calculate angular and linear velocities using centers
-            angular_vel, linear_vel = calculate_velocities(centers, bev_img.shape[1])
-
-            # Publish velocities using cmd_vel topic
-            twist = Twist()
-            twist.angular.z = angular_vel
-            twist.linear.x = linear_vel
-            cmd_vel_pub.publish(twist)
-
-            cv2.imshow('camera', frame)
+    if cv2.waitKey(1) & 0xFF == 27 :
+        break
 
 
-        if cv2.waitKey(1) & 0xFF == 27 :
-            break
+cap.release()
+cv2.destroyAllWindows()
 
-
-    cv2.destroyAllWindows()
-
-if __name__ == '__main__':
-    main()
