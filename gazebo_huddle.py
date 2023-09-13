@@ -31,7 +31,8 @@ ye_upp_bgr = np.array([50, 150, 150])
 detected_huddle_color = (255, 100, 255)
 
 def calculate_distance(contour_area):
-    # 거리계산 채워놓기
+    
+    
     return contour_area 
 
 def main():
