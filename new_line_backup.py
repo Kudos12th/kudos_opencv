@@ -47,7 +47,12 @@ def find_white(img, out_img):
 
     return out_img, line_contours
 
-def cal_vel(line_contours):
+def cal_vel(line_contours, out_img):
     global last_angular_vel, last_linear_vel
     if line_contours:
         largest_line_contour = max(line_contours, key=cv2.contourArea)
+        cv2.circle(out_img, largest_line_contour[0][0], 3, (0, 255, 0), -1)
+        d_point = largest_line_contour[0][0]
+
+    if d_point:
+        
