@@ -23,37 +23,6 @@ def image_callback(msg):
         rospy.logerr(e)
 
 
-def calculate_velocities(centers, image_width) :
-    global last_angular_vel, last_linear_vel
-    if len(centers) :
-        center_x = image_width // 2
-        line_center_x = sum(point[0] for point in centers) // len(centers)
-        angle_error = math.atan2(center_x - line_center_x, image_width) * 2.0
-
-        max_angular_vel = 0.15
-        max_linear_vel = 0.05
-        # 0.2와 0.07로 했을 때 리니어가 0.063쯤까지 올라감
-
-        angular_vel = max_angular_vel * angle_error
-        linear_vel = max_linear_vel * (1.0 - abs(angle_error))
-
-        last_angular_vel = angular_vel
-        last_linear_vel = linear_vel
-
-        return angular_vel, linear_vel
-    
-    else:
-        return last_angular_vel,last_linear_vel
-
-
-def find_white(image) :
-    wh_low_bgr = np.array([100, 100 , 100])
-    wh_upp_bgr = np.array([255, 255, 255])
-    line_img = cv2.inRange(image, wh_low_bgr, wh_upp_bgr)
-
-    return line_img
-
-
 def bev(image) :
 
     # height, width = image.shape[:2]
@@ -71,6 +40,14 @@ def bev(image) :
     # transformed_img = image  # 버드아이뷰 안쓸 때
 
     return transformed_img
+
+
+def find_white(image) :
+    wh_low_bgr = np.array([100, 100 , 100])
+    wh_upp_bgr = np.array([255, 255, 255])
+    line_img = cv2.inRange(image, wh_low_bgr, wh_upp_bgr)
+
+    return line_img
 
 
 def window(image,out_img) :
@@ -119,6 +96,30 @@ def window(image,out_img) :
     cv2.imshow('detection in Bird Eye View', out_img)
 
     return centers
+
+
+
+def calculate_velocities(centers, image_width) :
+    global last_angular_vel, last_linear_vel
+    if len(centers) :
+        center_x = image_width // 2
+        line_center_x = centers[0][0]
+        angle_error = math.atan2(center_x - line_center_x, image_width) * 2.0
+
+        max_angular_vel = 0.15
+        max_linear_vel = 0.05
+        # 0.2와 0.07로 했을 때 리니어가 0.063쯤까지 올라감
+
+        angular_vel = max_angular_vel * angle_error
+        linear_vel = max_linear_vel * (1.0 - abs(angle_error))
+
+        last_angular_vel = angular_vel
+        last_linear_vel = linear_vel
+
+        return angular_vel, linear_vel
+    
+    else:
+        return last_angular_vel,last_linear_vel
 
 
 
