@@ -58,7 +58,7 @@ def largest_center(line_contours, line_hier, out_img):
     cv2.drawContours(out_img, line_contours, -1, [ 0, 0, 255], 2, cv2.LINE_8, line_hier)
     if line_contours:
         largest_line_contour = max(line_contours, key=cv2.contourArea)
-        dst_point = largest_line_contour[0][0]
+        dst_point = tuple(largest_line_contour[0][0])
         cv2.circle(out_img, dst_point, 5, (0, 255, 0), -1)
     cv2.imshow("Detection in Bird Eye View", out_img)
     return dst_point
@@ -70,7 +70,7 @@ def top_center(line_contours, line_hier, out_img) :
     cv2.drawContours(out_img, line_contours, -1, [ 0, 0, 255], 2, cv2.LINE_8, line_hier)
     
     if line_contours:
-        dst_point = line_contours[0][0][0]
+        dst_point = tuple(line_contours[0][0][0])
         cv2.circle(out_img, dst_point, 5, (0, 255, 0), -1)
     cv2.imshow("Detection in Bird Eye View", out_img)
 
