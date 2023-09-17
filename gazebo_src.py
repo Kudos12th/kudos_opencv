@@ -42,7 +42,7 @@ def find_yellow(img) :
     ye_low_bgr = np.array([0, 80, 80])
     ye_upp_bgr = np.array([50, 150, 150])
 
-    huddle_img = cv2.inRange(img, ye_low_bgr, ye_upp_bgr)
+    yellow_img = cv2.inRange(img, ye_low_bgr, ye_upp_bgr)
     
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
     yellow_img = cv2.morphologyEx(yellow_img,cv2.MORPH_OPEN, kernel, iterations=2)
@@ -210,9 +210,17 @@ def main() :
             huddle_contours, huddle_hier = find_yellow(frame)
             huddle_centers = huddle_detect(huddle_contours, huddle_hier, frame)
 
-            if huddle_centers[0][1] >= 350:
-                angular_vel, linear_vel = 0.0, 0.0
-            else :
+            # if huddle_centers[0][1] >= 350:
+            #     angular_vel, linear_vel = 0.0, 0.0
+            # else :
+            #     angular_vel, linear_vel = cal_vel(bev_img.shape[1], dst_point[0])
+
+            if huddle_centers:
+                if huddle_centers[0][1] >= 350:
+                    angular_vel, linear_vel = 0.0, 0.0
+                else:
+                    angular_vel, linear_vel = cal_vel(bev_img.shape[1], dst_point[0])
+            else:
                 angular_vel, linear_vel = cal_vel(bev_img.shape[1], dst_point[0])
 
             twist = Twist()
