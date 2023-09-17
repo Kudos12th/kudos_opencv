@@ -23,20 +23,20 @@ def image_callback(msg):
     except Exception as e:
         rospy.logerr(e)
 
-# def bev_point(img) :
+def bev_point(img) :
 
-#     wh_low_bgr = np.array([100, 100, 100])
-#     wh_upp_bgr = np.array([255, 255, 255])
+    wh_low_bgr = np.array([100, 100, 100])
+    wh_upp_bgr = np.array([255, 255, 255])
 
-#     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
-#     img = cv2.morphologyEx(img,cv2.MORPH_OPEN, kernel, iterations=2)
-#     white_img = cv2.inRange(img, wh_low_bgr, wh_upp_bgr)
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
+    img = cv2.morphologyEx(img,cv2.MORPH_OPEN, kernel, iterations=2)
+    white_img = cv2.inRange(img, wh_low_bgr, wh_upp_bgr)
 
-#     line_contours, line_hier = cv2.findContours(white_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    line_contours, line_hier = cv2.findContours(white_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-#     max_y_point = max(line_contours, key=lambda x: x[0][0][1])
+    max_y_point = max(line_contours, key=lambda x: x[0][0][1])
 
-#     return max_y_point
+    return max_y_point
 
 
 def bev(image):
