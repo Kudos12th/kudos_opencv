@@ -24,7 +24,6 @@ def image_callback(msg):
         rospy.logerr(e)
 
 
-
 def bev(image):
     width=640
     height=480
@@ -70,7 +69,7 @@ def huddle_detect(huddle_contours, huddle_hier, out_img):
         cv2.circle(out_img, (cX, cY), 5, (0, 255, 0), -1)
 
     cv2.drawContours(out_img, huddle_contours, -1, (255, 100, 255), 2, cv2.LINE_8, huddle_hier)
-    cv2.imshow("Huddle", out_img)
+    cv2.imshow("Camera with Huddle", out_img)
 
     return sorted_centers
 
