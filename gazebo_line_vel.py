@@ -53,7 +53,7 @@ def find_white(image) :
 def window(image,out_img) :
 
     margin = 50
-    nwindows = 5
+    nwindows = 12
     window_height = int(image.shape[0]/nwindows)
     line_color = [255,0,0]
     window_color = [0, 0, 255]
@@ -104,7 +104,7 @@ def calculate_velocities(centers, image_width) :
     if len(centers) :
         center_x = image_width // 2
         line_center_x = centers[0][0]
-        angle_error = math.atan2(center_x - line_center_x, image_width) * 2.0
+        angle_error = math.atan2(center_x - line_center_x, image_width - 50) * 2.0
 
         max_angular_vel = 0.15
         max_linear_vel = 0.05
