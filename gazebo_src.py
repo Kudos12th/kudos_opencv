@@ -38,6 +38,7 @@ def bev(image):
     return transformed_img
 
 
+
 def find_yellow(img) :
     ye_low_bgr = np.array([0, 80, 80])
     ye_upp_bgr = np.array([50, 150, 150])
@@ -49,6 +50,7 @@ def find_yellow(img) :
     huddle_contours, huddle_hier = cv2.findContours(yellow_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     return huddle_contours, huddle_hier
+
 
 
 def huddle_detect(huddle_contours, huddle_hier, out_img):
@@ -97,7 +99,6 @@ def largest_center(line_contours, line_hier, out_img):
         cv2.circle(out_img, dst_point, 5, (0, 255, 0), -1)
     cv2.imshow("Detection in Bird Eye View(largest_center)", out_img)
     return dst_point
-
 
 
 
@@ -188,7 +189,7 @@ def cal_vel(img_width, dst_x):
         return last_angular_vel, last_linear_vel
 
 
-    
+
 def main() :
     cmd_vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
 
@@ -210,11 +211,6 @@ def main() :
             huddle_contours, huddle_hier = find_yellow(frame)
             huddle_centers = huddle_detect(huddle_contours, huddle_hier, frame)
 
-            # if huddle_centers[0][1] >= 350:
-            #     angular_vel, linear_vel = 0.0, 0.0
-            # else :
-            #     angular_vel, linear_vel = cal_vel(bev_img.shape[1], dst_point[0])
-
             if huddle_centers:
                 if huddle_centers[0][1] >= 350:
                     angular_vel, linear_vel = 0.0, 0.0
@@ -227,14 +223,11 @@ def main() :
             twist.angular.z = angular_vel
             twist.linear.x = linear_vel
             cmd_vel_pub.publish(twist)
-            
-            cv2.imshow('camera', frame)
 
         if cv2.waitKey(1) & 0xFF == 27 :
             break
 
     cv2.destroyAllWindows()
-
 
 
 if __name__ == '__main__':
