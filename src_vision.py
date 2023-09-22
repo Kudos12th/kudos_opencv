@@ -4,7 +4,6 @@ import math
 from geometry_msgs.msg import Twist
 import rospy
 
-
 last_angular_vel = 0.0
 last_linear_vel = 0.0
 
