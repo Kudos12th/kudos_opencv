@@ -11,7 +11,7 @@ last_linear_vel = 0.0
 rospy.init_node('video_subscriber_node', anonymous=True)
 cmd_vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
 
-cap = cv2.VideoCapture(2)
+cap = cv2.VideoCapture(0)
 
 frame_size = (int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
 print("Frame size : ", frame_size)
@@ -32,8 +32,8 @@ def bev(image):
 
 
 def find_yellow(img) :
-    ye_low_bgr = np.array([0, 80, 80])
-    ye_upp_bgr = np.array([50, 150, 150])
+    ye_low_bgr = np.array([40, 170, 110])
+    ye_upp_bgr = np.array([170, 255, 210])
 
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
     img = cv2.morphologyEx(img,cv2.MORPH_OPEN, kernel, iterations=2)
@@ -58,7 +58,7 @@ def huddle_detect(huddle_contours, huddle_hier, out_img):
     sorted_centers = sorted(huddle_centers, key=lambda x: x[1], reverse=True)
     for idx, center in enumerate(sorted_centers, start = 1):
         cX, cY = center
-        print(f"Huddle {idx}: X = {cX}, Y = {cY}")
+        #print(f"Huddle {idx}: X = {cX}, Y = {cY}")
         cv2.circle(out_img, (cX, cY), 5, (0, 255, 0), -1)
 
     cv2.drawContours(out_img, huddle_contours, -1, (255, 100, 255), 2, cv2.LINE_8, huddle_hier)
@@ -69,7 +69,7 @@ def huddle_detect(huddle_contours, huddle_hier, out_img):
 
 
 def find_white(img):
-    wh_low_bgr = np.array([100, 100, 100])
+    wh_low_bgr = np.array([200, 200, 200])
     wh_upp_bgr = np.array([255, 255, 255])
 
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
@@ -168,7 +168,7 @@ def cal_vel(img_width, dst_point):
         dst_x = dst_point[0]
         angle_error = math.atan2(center_x - dst_x, img_width) * 2.0
 
-        max_angular_vel = 0.15
+        max_angular_vel = 0.4
         max_linear_vel = 0.05
 
         angular_vel = max_angular_vel * angle_error
@@ -176,10 +176,12 @@ def cal_vel(img_width, dst_point):
 
         last_angular_vel = angular_vel
         last_linear_vel = linear_vel
-
+        
+        print("dst_x =", dst_x)
         return angular_vel, linear_vel
     else:
-        # print("No line")
+        print("No line")
+        # return 0.0, 0.0
         return last_angular_vel, last_linear_vel
     
 
@@ -200,7 +202,7 @@ while True :
     huddle_centers = huddle_detect(huddle_contours, huddle_hier, frame)
 
     if huddle_centers:
-        if huddle_centers[0][1] >= 350:
+        if huddle_centers[0][1] >= 430:
             angular_vel, linear_vel = 0.0, 0.0
         else:
             angular_vel, linear_vel = cal_vel(bev_img.shape[1], dst_point)
