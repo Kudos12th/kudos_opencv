@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 import rospy
 import numpy as np
 from sensor_msgs.msg import PointCloud2, Image

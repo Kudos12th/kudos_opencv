@@ -4,13 +4,21 @@ import math
 from geometry_msgs.msg import Twist
 import rospy
 
+from std_msgs.msg import Int32
+
 last_angular_vel = 0.0
 last_linear_vel = 0.0
+zero_cnt = 0
+h_stop = 0 
 
+
+# 1. 기울기 계산.
+# 2. h_stop -> 회전 보정 def -> 회전 완료(오차 <  A 일때,) -> h_stop = 1
 rospy.init_node('video_subscriber_node', anonymous=True)
 cmd_vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
+h_stop_pub = rospy.Publisher('/h_stop', Int32, queue_size=1)
 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(1)
 
 frame_size = (int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
 print("Frame size : ", frame_size)
@@ -19,7 +27,11 @@ print("Frame size : ", frame_size)
 def bev(image):
     width=640
     height=480
-    view=[[170, 330], [130, 480], [470, 330], [510, 480]] #좌상 좌하 우상 우하
+    # view=[[170, 330], [130, 480], [470, 330], [510, 480]] #좌상 좌하 우상 우하
+
+    #280
+    view=[[130, 330], [90, 480], [430, 330], [470, 480]] #좌상 좌하 우상 우하
+
 
     source = np.float32(view)
     destination = np.float32([[0, 0], [0, height], [width, 0], [width, height]])
@@ -203,8 +215,18 @@ while True :
     huddle_centers = huddle_detect(huddle_contours, huddle_hier, frame)
 
     if huddle_centers:
-        if huddle_centers[0][1] >= 410:
+        if huddle_centers[0][1] >= 460:
+
+            print("hurdle stop")
+
             angular_vel, linear_vel = 0.0, 0.0
+            zero_cnt += 1
+            if zero_cnt == 9:
+                h_stop = 1
+    
+            elif zero_cnt == 10:
+                h_stop = 0
+                zero_cnt = 0
         else:
             angular_vel, linear_vel = cal_vel(bev_img.shape[1], dst_point)
     else:
@@ -214,6 +236,10 @@ while True :
     twist.angular.z = angular_vel
     twist.linear.x = linear_vel
     cmd_vel_pub.publish(twist)
+
+    msg = Int32()
+    msg.data = h_stop
+    h_stop_pub.publish(msg)
 
     if cv2.waitKey(1) & 0xFF == 27 :
             break
