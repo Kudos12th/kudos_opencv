@@ -41,13 +41,19 @@ while not rospy.is_shutdown():
         
         print("Goal center (x, y):", cx, cy)
 
-        error_x = cx - frame.shape[1] / 2  
-
+        error_x = cx - 210  
         Kp = 0.001
-        cmd_vel_msg = Twist()
-        cmd_vel_msg.linear.x = 0
-        cmd_vel_msg.angular.z = -Kp * error_x 
-        cmd_vel_pub.publish(cmd_vel_msg)
+
+        if error_x > -20 & error_x < 20:
+            cmd_vel_msg.linear.x = 0
+            cmd_vel_msg.angular.z = 0
+            
+        else:
+            cmd_vel_msg = Twist()
+            cmd_vel_msg.linear.x = 0
+            cmd_vel_msg.angular.z = -Kp * error_x 
+            cmd_vel_pub.publish(cmd_vel_msg)
+
         
         # 중심과 화면 중심을 연결하는 선 그리기
         cv2.line(frame, (cx, cy), (frame.shape[1] // 2, frame.shape[0] // 2), (255, 255, 255), 2)
