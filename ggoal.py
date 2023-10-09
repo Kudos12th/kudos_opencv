@@ -23,9 +23,9 @@ def process_point_cloud(cloud_msg):
     filtered_points = points[np.logical_and(points[:, 0] > A, points[:, 0] < B)]
 
     # Assuming the points are in meters, a scaling factor will convert them into pixel coordinates
-    scaling_factor = 100  # for example, 100 pixels per meter
-    image_width = 500  # adjust as needed
-    image_height = 500  # adjust as needed
+    scaling_factor = 80  # for example, 100 pixels per meter
+    image_width = 300  # adjust as needed
+    image_height = 300  # adjust as needed
     image = np.zeros((image_height, image_width), dtype=np.uint8)
     for point in filtered_points:
         y = int(point[1] * scaling_factor) + image_height // 2
@@ -33,8 +33,11 @@ def process_point_cloud(cloud_msg):
         if 0 <= y < image_height and 0 <= z < image_width:
             image[y, z] = 255
 
+    rotated_image = cv2.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE)
+    flipped_image = cv2.flip(rotated_image, 1)
+
     # Convert the numpy image to a ROS Image message and publish
-    image_msg = bridge.cv2_to_imgmsg(image, "mono8")
+    image_msg = bridge.cv2_to_imgmsg(flipped_image, "mono8")
     image_msg.header = cloud_msg.header
     pub.publish(image_msg)
     
@@ -43,12 +46,3 @@ if __name__ == '__main__':
     rospy.Subscriber("/scan_3D", PointCloud2, process_point_cloud)
     pub = rospy.Publisher("/lidar_convert_image", Image, queue_size=10)
     rospy.spin()
-
-
-
-
-
-
-
-
-
