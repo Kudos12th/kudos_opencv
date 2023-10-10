@@ -70,7 +70,7 @@ def huddle_detect(huddle_contours, huddle_hier, out_img):
         cX, cY = center
         #print(f"Huddle {idx}: X = {cX}, Y = {cY}")
     if sorted_centers:
-        cv2.circle(out_img, sorted_centers[0], 10, (0, 255, 0), -1)
+        cv2.circle(out_img, sorted_centers[0], 5, (0, 255, 0), -1)
 
     cv2.drawContours(out_img, huddle_contours, -1, (255, 100, 255), 2, cv2.LINE_8, huddle_hier)
     cv2.imshow("Camera with Huddle", out_img)
@@ -113,8 +113,7 @@ def cal_slope(contours,img) :
         
     if left_yellow :
         if right_yellow :
-            
-            cv2.line(img, left_yellow, right_yellow, (255,0,0), (2))
+            cv2.line(img, left_yellow, right_yellow, (0,0,255), (2))
 
             delta_x = right_yellow[0] - left_yellow[0]
             if delta_x != 0:
