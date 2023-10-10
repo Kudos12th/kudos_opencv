@@ -106,10 +106,9 @@ def cal_slope(contours,img) :
                 right_points.append((x, y))
 
     if left_points:
-        left_yellow = max(left_points, key=lambda point: point[1])  # 왼쪽 점 중 아래
-
+        left_yellow = min(left_points, key=lambda point: point[1])  
     if right_points:
-        right_yellow = max(right_points, key=lambda point: point[1])  # 오른쪽 점 중 아래
+        right_yellow = min(right_points, key=lambda point: point[1]) 
         
     if left_yellow :
         if right_yellow :
@@ -273,21 +272,21 @@ while True :
             zero_cnt += 1
 
             if zero_cnt > 9:
+                if -0.3 < slope < 0.3 :
+                    angular_vel, linear_vel = slope, 0.0
 
-                angular_vel, linear_vel = slope, 0.0
+                    if  -0.1 < slope < 0.1 :
+                        print('slope under 0.1')
+                        slope_cnt += 1
 
-                if -0.1 < slope < 0.1 :
-                    print('slope under 0.1')
-                    slope_cnt += 1
+                        if slope_cnt == 9 :
+                            h_stop = 1
+                            print('**Hurdle STOP**')
 
-                    if slope_cnt == 9 :
-                        h_stop = 1
-                        print('**Hurdle STOP**')
-
-                    elif slope_cnt == 10 :
-                        slope_cnt = 0
-                        zero_cnt = 0  
-                        h_stop = 0
+                        elif slope_cnt == 10 :
+                            slope_cnt = 0
+                            zero_cnt = 0  
+                            h_stop = 0
 
         else:
             angular_vel, linear_vel = cal_vel(bev_img.shape[1], dst_point)
