@@ -10,8 +10,8 @@ flag = 1
 blue_cnt = 0
 slope_cnt = 0
 red_cnt = 0
-blue_stop = 0
-ballgoal = 0
+b_stop = 0
+s_stop = 0
 
 
 cap = cv2.VideoCapture(2)
@@ -150,12 +150,12 @@ while True:
                                     slope_cnt += 1
                                     if slope_cnt == 5 :
                                         # 파란색 앞에서 멈추기
-                                        blue_stop = 1
+                                        b_stop = 1
                                         print('********75cm STOP********')
                                     elif slope_cnt == 6:
                                         slope_cnt == 0
                                         blue_cnt == 0
-                                        blue_stop = 0
+                                        b_stop = 0
                                         flag = 2
 
             else:
@@ -183,9 +183,9 @@ while True:
                                 red_cnt += 1
                                 if red_cnt == 10 :
                                     # 농구공 던지기
-                                    ballgoal = 1
+                                    s_stop = 1
                                 elif red_cnt == 11 :
-                                    ballgoal = 0
+                                    s_stop = 0
                                     flag = 3
         else :
             print('NO GOAL')
