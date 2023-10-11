@@ -276,6 +276,10 @@ while True :
                     angular_vel, linear_vel = slope, 0.0
 
                     if  -0.1 < slope < 0.1 :
+                        ##### nuc에 추가할부분
+                        angular_vel, linear_vel = 0.0, 0.0
+
+
                         print('slope under 0.1')
                         slope_cnt += 1
 
