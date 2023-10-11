@@ -3,18 +3,22 @@ import cv2
 import numpy as np
 from geometry_msgs.msg import Twist
 
+from std_msgs.msg import Int32
+
+
 rospy.init_node('ball_walk')
 cmd_vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
+b_stop_pub = rospy.Publisher('/b_stop', Int32, queue_size=1)
 
 flag = 1
 blue_cnt = 0
 slope_cnt = 0
 red_cnt = 0
 b_stop = 0
-s_stop = 0
 
 
-cap = cv2.VideoCapture(2)
+
+cap = cv2.VideoCapture(0)
 
 frame_size = (int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
 print("Frame size: ", frame_size)
@@ -111,6 +115,7 @@ def find_red(img) :
             cx = x + w // 2
             cy = y + h // 2
             
+            cv2.circle(frame, (cx, cy), 5, (255, 0, 0), -1)
             print("Goal center (x, y):", cx, cy)
 
         return cx
@@ -122,10 +127,14 @@ while True:
     ret, frame = cap.read()
     frame = cv2.resize(frame, (640, 480))
 
+
     # 파란 바닥이 보이면 멈추기
     if flag == 1 :
+        frame_blue_y = 240
+        cv2.line(frame, (frame_blue_y,0), (frame_blue_y,480), (255,255,255), (2))
+
         blue_contours, blue_hier = find_blue(frame)
-        cv2.drawContours(frame, blue_contours, -1, (0, 0, 255), 2, cv2.LINE_8, blue_hier)
+        cv2.drawContours(frame, blue_contours, -1, (0, 255, 0), 2, cv2.LINE_8, blue_hier)
 
         if blue_contours:
             blue_y = [point[0][1] for contour in blue_contours for point in contour]
@@ -133,25 +142,30 @@ while True:
             slope = cal_slope(blue_contours, frame)
             cv2.line(frame, (0,max_blue_y), (640,max_blue_y), (255,0,0), (2))
             
-            if max_blue_y >= 240 :
-                angular_vel, linear_vel = 0.0, 0.0
+            if max_blue_y >= frame_blue_y :
+                angular_vel = 0.0
+                linear_vel = 0.0
                 blue_cnt += 1
                 print('max_blue_y = ', max_blue_y,'\n STOP')
                 if blue_cnt > 5:
                     if -3.0 < slope < 3.0:
-                        angular_vel, linear_vel = slope * 0.1, 0.0
+                        angular_vel = slope * 0.1
+                        linear_vel =  0.0
                         if -1.0 < slope < 1.0:
-                            angular_vel, linear_vel = slope * 0.3, 0.0
+                            angular_vel = slope * 0.3
+                            linear_vel = 0.0
                             if -0.3 < slope < 0.3:
-                                angular_vel, linear_vel = slope , 0.0
+                                angular_vel= slope 
+                                linear_vel = 0.0
                                 if -0.1 < slope < 0.1 :
-                                    angular_vel, linear_vel = 0.0, 0.0
+                                    angular_vel = 0.0
+                                    linear_vel = 0.0
                                     print('slope under 0.1')
                                     slope_cnt += 1
                                     if slope_cnt == 5 :
                                         # 파란색 앞에서 멈추기
                                         b_stop = 1
-                                        print('********75cm STOP********')
+                                        print('************************************************\n************************************************\n*******************75cm STOP********************\n************************************************\n************************************************')
                                     elif slope_cnt == 6:
                                         slope_cnt == 0
                                         blue_cnt == 0
@@ -159,41 +173,55 @@ while True:
                                         flag = 2
 
             else:
-                angular_vel, linear_vel = 0.0, 0.4
+                angular_vel = 0.0
+                linear_vel = 0.4
                 print('max_blue_y = ', max_blue_y)
         else:
-            angular_vel, linear_vel = 0.0, 0.4
+            angular_vel = 0.0
+            linear_vel = 0.4
             print('No Blue')
 
     # 골대찾기
     elif flag == 2 :
+        frame_goal_x = 200
+        cv2.line(frame, (frame_goal_x,0), (frame_goal_x,480), (255,255,255), (2))
         cx = find_red(frame)
         if cx :
-            error_x = cx - 200
+            error_x = cx - frame_goal_x
+            print('X_error = ', error_x)
             if -500 < cx < 500 :
-                angular_vel, linear_vel = 0.0007 * error_x
+                angular_vel = 0.0007 * error_x
+                linear_vel = 0
                 if -300 < cx < 300 :
-                    angular_vel, linear_vel = 0.0012 * error_x
+                    angular_vel = 0.0012 * error_x
+                    linear_vel = 0.0
                     if -100 < cx < 100 :
-                        angular_vel, linear_vel = 0.0035 * error_x
+                        angular_vel = 0.0035 * error_x
+                        linear_vel = 0.0
                         if -50 < cx < 50 :
-                            angular_vel, linear_vel = 0.007 * error_x
+                            angular_vel = 0.007 * error_x
+                            linear_vel = 0.0
                             if -20 < error_x < 20 :
-                                angular_vel, linear_vel = 0.0, 0.0
+                                angular_vel = 0.0
+                                linear_vel = 0.0
                                 red_cnt += 1
-                                if red_cnt == 10 :
+                                if red_cnt == 5 :
                                     # 농구공 던지기
-                                    s_stop = 1
-                                elif red_cnt == 11 :
-                                    s_stop = 0
+                                    print("************************************************\n************************************************\n*******************GOAL STOP********************\n************************************************\n************************************************")
+                                    b_stop = 2
+                                    
+                                elif red_cnt == 6 :
+                                    b_stop = 0
                                     flag = 3
         else :
             print('NO GOAL')
-            angular_vel, linear_vel = 0.0, -0.02
+            angular_vel = 0.0
+            linear_vel = -0.02
 
     elif flag == 3 :
 
-        angular_vel, linear_vel = 0.0, 0.0
+        angular_vel = 0.0
+        linear_vel = 0.0
 
 
     twist = Twist()
@@ -201,6 +229,9 @@ while True:
     twist.linear.x = linear_vel
     cmd_vel_pub.publish(twist)
 
+    msg = Int32()
+    msg.data = b_stop
+    b_stop_pub.publish(msg)
 
     cv2.imshow("Camera", frame)
 
