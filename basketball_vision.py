@@ -157,12 +157,11 @@ while True:
                                     linear_vel = 0.0
                                     print('slope under 0.1')
                                     slope_cnt += 1
-                                    if slope_cnt == 5 :
+                                    if 5 <= slope_cnt <= 6 :
                                         # 파란색 앞에서 멈추기
                                         b_stop = 1
-                                        slope_cnt += 1
                                         print('************************************************\n************************************************\n*******************75cm STOP********************\n************************************************\n************************************************')
-                                    elif slope_cnt > 5 :
+                                    elif slope_cnt > 6 :
                                         b_stop = 0
                                         flag = 2
 
@@ -178,7 +177,7 @@ while True:
     # 골대찾기
     elif flag == 2 :
         print('red_cnt = ', red_cnt)
-        frame_goal_x = 170
+        frame_goal_x = 175
         error = 30
         cv2.line(frame, (frame_goal_x - error,0), (frame_goal_x - error,480), (255,255,255), (2))
         cv2.line(frame, (frame_goal_x + error,0), (frame_goal_x + error,480), (255,255,255), (2))
@@ -202,11 +201,11 @@ while True:
                                 angular_vel = 0.0
                                 linear_vel = 0.0
                                 red_cnt += 1
-                                if red_cnt == 8 :
+                                if 5 <= red_cnt <= 7 :
                                     # 농구공 던지기
                                     print("************************************************\n************************************************\n*******************GOAL STOP********************\n************************************************\n************************************************")
                                     b_stop = 2
-                                elif red_cnt > 8 :
+                                elif red_cnt > 7 :
                                     b_stop = 0
                                     flag = 3
             else :
@@ -239,4 +238,4 @@ while True:
         break
 
 cap.release()
-cv2.destroyAllWindows()
+cv2.destroyAllWindows
