@@ -11,6 +11,14 @@ last_linear_vel = 0.0
 zero_cnt = 0
 h_stop = 0 
 slope_cnt = 0
+publish_h_stop = False
+
+
+def enable_h_stop_publishing(event):
+    global publish_h_stop
+    publish_h_stop = True
+
+rospy.Timer(rospy.Duration(5.0), enable_h_stop_publishing, oneshot=True)
 
 rospy.init_node('video_subscriber_node', anonymous=True)
 cmd_vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
@@ -127,8 +135,6 @@ def cal_slope(contours,img) :
             return slope
 
     
-
-
 
 
 def find_white(img):
@@ -266,7 +272,7 @@ while True :
     huddle_centers = huddle_detect(huddle_contours, huddle_hier, frame)
 
     if huddle_centers:
-        if huddle_centers[0][1] >= 380:
+        if huddle_centers[0][1] >= 350:
 
             slope = cal_slope(huddle_contours, frame)
             # print("hurdle stop")
@@ -284,12 +290,11 @@ while True :
                         print('slope under 0.15 :',slope_cnt)
                         slope_cnt += 1
 
-                        if slope_cnt == 4 :
+                        if 4 <= slope_cnt <= 6 :
                             h_stop = 1
-                            slope_cnt += 1
-                            print('**Hurdle STOP**')
+                            print('****************Hurdle STOP****************8*')
 
-                        elif slope_cnt > 4 :
+                        elif slope_cnt > 6 :
                             slope_cnt = 0
                             zero_cnt = 0  
                             h_stop = 0
@@ -310,8 +315,9 @@ while True :
     cmd_vel_pub.publish(twist)
 
     msg = Int32()
-    msg.data = h_stop
-    h_stop_pub.publish(msg)
+    if publish_h_stop:
+        msg.data = h_stop
+        h_stop_pub.publish(msg)
 
     cv2.imshow("Camera with Huddle", frame)
 
