@@ -92,8 +92,8 @@ def cal_slope(contours,img) :
 def find_red(img) :
 
     # bgr
-    lower_red = np.array([0, 0, 210])
-    upper_red = np.array([80, 80, 255])   
+    lower_red = np.array([20, 0, 150])
+    upper_red = np.array([50, 20, 200])   
     red_mask = cv2.inRange(img, lower_red, upper_red)
 
     red_contours, _ = cv2.findContours(red_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -125,7 +125,7 @@ while True:
     # 파란 바닥이 보이면 멈추기
     if flag == 1 :
         print("slope_cnt : ", slope_cnt)
-        frame_blue_y = 330
+        frame_blue_y = 400
         cv2.line(frame, (0,frame_blue_y), (640,frame_blue_y), (255,255,255), (2))
 
         blue_contours, blue_hier = find_blue(frame)
@@ -215,7 +215,7 @@ while True:
         else :
             print('NO GOAL')
             angular_vel = 0.0
-            linear_vel = -0.02
+            linear_vel = 0.0
 
     elif flag == 3 :
 
