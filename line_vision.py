@@ -136,9 +136,8 @@ def cal_slope(contours,img) :
 
     
 
-
 def find_white(img):
-    wh_low_bgr = np.array([230, 230, 230])
+    wh_low_bgr = np.array([200, 230, 230])
     wh_upp_bgr = np.array([255, 255, 255])
 
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
