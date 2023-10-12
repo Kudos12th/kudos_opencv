@@ -25,8 +25,8 @@ print("Frame size: ", frame_size)
 def find_blue(img):
 
     # bgr
-    lower_blue = np.array([200, 70, 30])
-    upper_blue = np.array([255, 200, 150])
+    lower_blue = np.array([250, 170, 0])
+    upper_blue = np.array([255, 180, 70])
 
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
     img = cv2.morphologyEx(img, cv2.MORPH_OPEN, kernel, iterations=2)
