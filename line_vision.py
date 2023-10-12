@@ -276,29 +276,26 @@ while True :
 
             zero_cnt += 1
 
-            if zero_cnt > 4:
+            if zero_cnt > 3:
                 if -4.0 < slope < 4.0 :
-                    print('h_stop =', h_stop)
-                    angular_vel = - slope*0.125
-                    linear_vel = 0.0
+                    angular_vel, linear_vel = slope*0.125, 0.0
 
-                    if  -0.05 < slope < 0.05 :
-                        print('slope_cnt :',slope_cnt)
-                        angular_vel = 0.0
-                        linear_vel = 0.0
+                    if  -0.2 < slope < 0.2 :
+                        print('slope under 0.15 :',slope_cnt)
                         slope_cnt += 1
 
-                        if 4 <= slope_cnt <= 6 :
+                        if slope_cnt == 4 :
                             h_stop = 1
                             slope_cnt += 1
-                            print('****************Hurdle STOP******************')
+                            print('**Hurdle STOP**')
 
-                        elif slope_cnt > 6 :
+                        elif slope_cnt > 4 :
                             slope_cnt = 0
                             zero_cnt = 0  
                             h_stop = 0
                     else:
                         slope_cnt = 0
+
         else:
             angular_vel, linear_vel = cal_vel(bev_img.shape[1], dst_point)
             h_stop = 0
